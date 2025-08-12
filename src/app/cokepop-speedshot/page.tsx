@@ -1,6 +1,6 @@
 // app/cokepop-speedshot/page.tsx
 import React from 'react'
-import styles from './page.module.scss'
+import styles from '../page.module.scss'
 
 const CokePopSpeedShot: React.FC = () => (
   <div className={styles.container}>
