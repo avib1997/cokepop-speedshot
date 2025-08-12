@@ -214,7 +214,10 @@
 
 .bubble {
   position: absolute;
-  z-index: 1;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  z-index: 5;
   --hitScale: 1.2;
   width: calc(var(--size) * var(--hitScale));
   height: calc(var(--size) * var(--hitScale));
@@ -225,7 +228,8 @@
   transform: translateY(0);
   will-change: transform;
   animation: ascend var(--dur) linear var(--delay, 0s) forwards;
-  touch-action: manipulation;
+  -webkit-user-select: none;
+  touch-action: none;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);

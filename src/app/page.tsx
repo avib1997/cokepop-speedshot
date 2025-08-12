@@ -164,7 +164,6 @@ function Home() {
     // מקפיאים את מצב האנימציה והמיקום כדי שלא "יקפוץ"
     const cs = window.getComputedStyle(el)
     el.style.animationPlayState = 'paused'
-    el.style.bottom = cs.bottom
     el.style.transition = 'none'
 
     // מפעילים אנימציית פופ על המעטפת הפנימית ומסמנים סוג
@@ -187,6 +186,42 @@ function Home() {
         return next
       })
     }
+  }
+
+  const popBubble = (b: Bubble, el: HTMLButtonElement, cx: number, cy: number) => {
+    if (b.popping) return
+    // לעצור את האנימציה בלי bottom (זה שובש במובייל)
+    el.style.animationPlayState = 'paused'
+    el.style.transition = 'none'
+
+    const kind: 'good' | 'bad' = b.isLogo ? 'good' : 'bad'
+    setBubbles((prev) => prev.map((x) => (x.id === b.id ? { ...x, popping: kind, cx, cy } : x)))
+    setTimeout(() => setBubbles((prev) => prev.filter((x) => x.id !== b.id)), 400)
+
+    if (kind === 'good') {
+      setRedHits((prev) => {
+        const next = prev + 1
+        if (next >= 5 && !bonusGiven) {
+          setBonusGiven(true)
+          setScore((s) => s + 1)
+          wowCoin()
+        }
+        return next
+      })
+    }
+  }
+
+  const handleBubblePointer = (b: Bubble, e: React.PointerEvent<HTMLButtonElement>) => {
+    const el = e.currentTarget
+    const r = el.getBoundingClientRect()
+    popBubble(b, el, ((e.clientX - r.left) / r.width) * 100, ((e.clientY - r.top) / r.height) * 100)
+  }
+
+  const handleBubbleTouch = (b: Bubble, e: React.TouchEvent<HTMLButtonElement>) => {
+    const t = e.touches[0] || e.changedTouches[0]
+    const el = e.currentTarget
+    const r = el.getBoundingClientRect()
+    popBubble(b, el, ((t.clientX - r.left) / r.width) * 100, ((t.clientY - r.top) / r.height) * 100)
   }
 
   const handleAnswer = (correct: boolean) => {
@@ -376,7 +411,10 @@ function Home() {
                 key={b.id}
                 className={[styles.bubble, b.isLogo ? styles.logo : styles.noLogo, b.popping === 'good' ? styles.popGood : '', b.popping === 'bad' ? styles.popBad : ''].join(' ')}
                 style={styleObj}
-                onClick={(e) => handleBubbleClick(b, e)}
+                onPointerDown={(e) => handleBubblePointer(b, e)}
+                onTouchStart={(e) => handleBubbleTouch(b, e)} // גיבוי ל-iOS ישנים
+                onClick={(e) => e.preventDefault()} // למנוע "ghost click"
+                type="button"
                 aria-label={b.isLogo ? 'Coca-Cola bubble' : 'neutral bubble'}
               >
                 <span className={styles.bubbleInner}>
