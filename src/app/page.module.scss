@@ -1265,7 +1265,10 @@
   text-shadow: 0 0 16px rgba(228, 26, 28, 0.35);
   direction: rtl;
   margin-bottom: 0px;
-  line-break: anywhere;
+  line-break: normal;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 .ctaButtons {
   display: flex;
@@ -1496,9 +1499,9 @@
 .contactCard {
   position: relative;
   z-index: 1;
-  width: min(92vw, 360px); /* קובע עמוד צר */
+  width: min(90vw, 336px);
   margin-inline: auto;
-  max-width: 412px;
+  max-width: 360px;
   margin: 0 auto;
   padding: 14px 12px;
   display: grid;
@@ -1512,6 +1515,19 @@
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
   direction: rtl;
   justify-items: center;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+.contactCard .ctaHeadline,
+.contactCard .ctaParagraph,
+.contactCard .checklist li,
+.contactCard .whatsappNote {
+  line-break: normal;
+  word-break: keep-all;
+  overflow-wrap: normal;
+  hyphens: none;
 }
 
 /* C — ריבון הצעה */

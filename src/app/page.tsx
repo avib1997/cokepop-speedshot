@@ -33,6 +33,10 @@ type CSSVarStyle = React.CSSProperties & {
 }
 
 function Home() {
+  const MIN_RED = 7
+  const MAX_BLACK = 5
+  const redSpawnedRef = useRef(0)
+  const blackSpawnedRef = useRef(0)
   const [showIntro, setShowIntro] = useState(true)
   const [started, setStarted] = useState(false)
   const [qIdx, setQIdx] = useState(0)
@@ -90,6 +94,8 @@ function Home() {
     setRedHits(0)
     setBonusGiven(false)
     setBubbles([])
+    redSpawnedRef.current = 0
+    blackSpawnedRef.current = 0
 
     const MAX_ONSCREEN = 6 // מקס' בועות על המסך
     const SPAWN_EVERY_MS = 420 // כל כמה זמן מולידים בועה
@@ -107,15 +113,27 @@ function Home() {
         const dur = base + Math.random() * extra + sizeFactor * 1.0 // ~4.2..9.0s
         const left = Math.random() * 82 + 4 // 4%..86%
 
+        let isLogo: boolean
+        if (blackSpawnedRef.current >= MAX_BLACK) {
+          isLogo = true
+        } else if (redSpawnedRef.current < MIN_RED) {
+          isLogo = true
+        } else {
+          isLogo = Math.random() < 0.7
+        }
+
         const b: Bubble = {
           id,
-          isLogo: Math.random() < 0.5, // אדומה=עם לוגו
+          isLogo,
           left,
           size,
           dur,
           dly: 0, // מתחילה מיד מהתחתית
           seed: Math.random()
         }
+
+        if (isLogo) redSpawnedRef.current++
+        else blackSpawnedRef.current++
 
         // הסרה אוטומטית כשהבועה סיימה לטפס
         setTimeout(() => {
