@@ -7,6 +7,7 @@ import { questions } from './questions'
 import ContactForm from './ContactForm' // ← חדש
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 
 type Bubble = {
   id: number
@@ -31,7 +32,7 @@ type CSSVarStyle = React.CSSProperties & {
   '--cy'?: string
 }
 
-export default function Home() {
+function Home() {
   const [showIntro, setShowIntro] = useState(true)
   const [started, setStarted] = useState(false)
   const [qIdx, setQIdx] = useState(0)
@@ -461,5 +462,12 @@ export default function Home() {
         ))}
       </div>
     </div>
+  )
+}
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <Home />
+    </Suspense>
   )
 }
