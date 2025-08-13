@@ -48,8 +48,7 @@ function Home() {
 
   // בונוס: רק אדומות נספרות; בונוס פעם אחת בסבב אחרי 5
   const [redHits, setRedHits] = useState(0)
-  const [bonusGiven, setBonusGiven] = useState(false)
-
+  const [roundCoins, setRoundCoins] = useState(0)
   const [usedBubbleChance, setUsedBubbleChance] = useState(false)
   const [finished, setFinished] = useState(false)
   const [timerKey, setTimerKey] = useState(0)
@@ -58,12 +57,37 @@ function Home() {
   const [showContact, setShowContact] = useState(false) // ← חדש
 
   const nextIdRef = useRef(0)
+  const [bonusToast, setBonusToast] = useState<null | { coins: number; ts: number }>(null)
+  const coinsFor = (hits: number) => (hits < 5 ? 0 : 1 + Math.floor((hits - 5) / 2))
+  const showBonusToast = (coins = 1) => {
+    setBonusToast({ coins, ts: Date.now() }) // ts כדי לכפות רה-מונט
+    if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current!)
+    bonusTimerRef.current = window.setTimeout(() => setBonusToast(null), 3000)
+  }
+  const bonusTimerRef = useRef<number | null>(null)
+  const roundCoinsRef = useRef(0)
+  useEffect(() => {
+    roundCoinsRef.current = roundCoins
+  }, [roundCoins])
 
   // גלילה לראש הדף
   const scrollTop = (smooth = false) => {
     const el = document.scrollingElement || document.documentElement
     el.scrollTo({ top: 0, left: 0, behavior: smooth ? 'smooth' : 'auto' })
   }
+
+  useEffect(() => {
+    return () => {
+      if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current!)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!bubbleMode && bonusTimerRef.current) {
+      clearTimeout(bonusTimerRef.current!)
+      setBonusToast(null)
+    }
+  }, [bubbleMode])
 
   // בכל מעבר מצב משמעותי – קופצים לראש
   useEffect(() => {
@@ -86,6 +110,27 @@ function Home() {
     setTimeout(() => setCoinFlash(false), 600)
   }
 
+  // כמה מטבעות חדשים נוספו בין prev→next
+  const calcNewCoins = (prev: number, next: number) => {
+    const base = prev < 5 && next >= 5 ? 1 : 0 // מעבר סף 5
+    const prevExtra = Math.max(0, prev - 5)
+    const nextExtra = Math.max(0, next - 5)
+    const everyTwo = Math.floor(nextExtra / 2) - Math.floor(prevExtra / 2) // כל 2 אחרי 5
+    return base + everyTwo
+  }
+
+  const onGoodHit = () => {
+    setRedHits((prev) => {
+      const next = prev + 1
+      const total = coinsFor(next) // כמה מגיע מצטבר בסבב
+      setRoundCoins((old) => {
+        if (total > old) showBonusToast(total) // מציג רק כשהסכום עלה: 5,7,9...
+        return total
+      })
+      return next
+    })
+  }
+
   const nextQuestion = useCallback(() => {
     if (qIdx + 1 === questions.length) {
       setFinished(true)
@@ -97,6 +142,8 @@ function Home() {
       setIsAnswerCorrect(null)
       setUsedBubbleChance(false)
     }
+    setBonusToast(null)
+    if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current!)
   }, [qIdx])
 
   // סבב הבועות: נולדות ברצף מהתחתית עד סוף 10 שניות
@@ -104,7 +151,7 @@ function Home() {
     if (!bubbleMode) return
 
     setRedHits(0)
-    setBonusGiven(false)
+    setRoundCoins(0)
     setBubbles([])
     redSpawnedRef.current = 0
     blackSpawnedRef.current = 0
@@ -163,6 +210,11 @@ function Home() {
     const iv = setInterval(spawnOne, SPAWN_EVERY_MS)
     const end = setTimeout(() => {
       clearInterval(iv)
+      const earned = roundCoinsRef.current
+      if (earned > 0) {
+        setScore((s) => s + earned)
+        wowCoin()
+      } // זיכוי חד-פעמי
       nextQuestion()
     }, ROUND_MS)
 
@@ -204,18 +256,7 @@ function Home() {
       setBubbles((prev) => prev.filter((x) => x.id !== b.id))
     }, 400)
 
-    // רק אדומות נספרות, בונוס פעם אחת אחרי 5
-    if (kind === 'good') {
-      setRedHits((prev) => {
-        const next = prev + 1
-        if (next >= 5 && !bonusGiven) {
-          setBonusGiven(true)
-          setScore((s) => s + 1) // מטבע בונוס
-          wowCoin()
-        }
-        return next
-      })
-    }
+    if (kind === 'good') onGoodHit()
   }
 
   const popBubble = (b: Bubble, el: HTMLButtonElement, cx: number, cy: number) => {
@@ -228,17 +269,7 @@ function Home() {
     setBubbles((prev) => prev.map((x) => (x.id === b.id ? { ...x, popping: kind, cx, cy } : x)))
     setTimeout(() => setBubbles((prev) => prev.filter((x) => x.id !== b.id)), 400)
 
-    if (kind === 'good') {
-      setRedHits((prev) => {
-        const next = prev + 1
-        if (next >= 5 && !bonusGiven) {
-          setBonusGiven(true)
-          setScore((s) => s + 1)
-          wowCoin()
-        }
-        return next
-      })
-    }
+    if (kind === 'good') onGoodHit()
   }
 
   const handleBubblePointer = (b: Bubble, e: React.PointerEvent<HTMLButtonElement>) => {
@@ -258,7 +289,7 @@ function Home() {
     setIsAnswerCorrect(correct)
     setFeedbackMode(true)
     if (correct) {
-      setScore((s) => s + 1)
+      setScore((s) => s + 2)
       wowCoin()
     }
   }
@@ -279,7 +310,6 @@ function Home() {
     setScore(0)
     setCoinFlash(false)
     setRedHits(0)
-    setBonusGiven(false)
     setUsedBubbleChance(false)
     setIsAnswerCorrect(null)
     setBubbles([])
@@ -287,8 +317,8 @@ function Home() {
     // לאתחל מפתחות/מזהים לאנימציות
     setTimerKey((k) => k + 1)
     nextIdRef.current = 0
-
-    // אופציונלי: לגלול לראש העמוד
+    setBonusToast(null)
+    if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current!)
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   }, [])
 
@@ -462,6 +492,24 @@ function Home() {
             )
           })}
         </div>
+        {/* {bonusToast && (
+          <div key={bonusToast.ts} className={styles.bonusToast}>
+            {bonusToast.coins === 1 ? (
+              <>
+                צברת עוד מטבע <bdi dir="ltr">1</bdi> 🪙
+              </>
+            ) : (
+              <>
+                צברת עוד <bdi dir="ltr">{bonusToast.coins}</bdi> מטבעות 🪙
+              </>
+            )}
+          </div>
+        )} */}
+        {bonusToast && (
+          <div key={bonusToast.ts} className={styles.bonusToast}>
+            בסבב הזה צברת <bdi dir="ltr">{bonusToast.coins}</bdi> {bonusToast.coins === 1 ? 'מטבע' : 'מטבעות'} 🪙
+          </div>
+        )}
       </div>
     )
 
