@@ -23,3 +23,6 @@ export async function POST(req: Request) {
   })
   return NextResponse.json({ ok: true, id: row.id })
 }
+
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
