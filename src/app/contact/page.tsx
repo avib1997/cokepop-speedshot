@@ -1,11 +1,23 @@
 'use client'
 
-import React, { useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import emailjs from 'emailjs-com'
 import styles from '../page.module.scss'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 export default function ContactPage() {
+  const pathname = usePathname()
+  const scrollTop = (smooth = false) => {
+    const el = document.scrollingElement || document.documentElement
+    el.scrollTo({ top: 0, left: 0, behavior: smooth ? 'smooth' : 'auto' })
+  }
+
+  // בהטענה ובכל ניווט – לראש הדף
+  useEffect(() => {
+    scrollTop(false)
+  }, [pathname])
+
   const formRef = useRef<HTMLFormElement>(null)
 
   const sendEmail = (e: React.FormEvent<HTMLFormElement>) => {

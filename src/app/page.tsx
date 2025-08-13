@@ -59,6 +59,18 @@ function Home() {
 
   const nextIdRef = useRef(0)
 
+  // גלילה לראש הדף
+  const scrollTop = (smooth = false) => {
+    const el = document.scrollingElement || document.documentElement
+    el.scrollTo({ top: 0, left: 0, behavior: smooth ? 'smooth' : 'auto' })
+  }
+
+  // בכל מעבר מצב משמעותי – קופצים לראש
+  useEffect(() => {
+    // smooth כשאתה רוצה קפיצה רכה; שנה ל-auto אם מעדיף מיידי
+    scrollTop(true)
+  }, [qIdx, feedbackMode, bubbleMode, finished, started])
+
   const search = useSearchParams()
   useEffect(() => {
     if (search.get('skipIntro') === '1') setShowIntro(false)
