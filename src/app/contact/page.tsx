@@ -122,11 +122,14 @@ export default function ContactPage() {
         </form>
 
         {/* וואטסאפ */}
-        <p className={styles.whatsappNote}>
-          או שלח הודעה ישר לוואטסאפ
-          <br />
-          054-566-5166
-        </p>
+        <a href="https://wa.me/972545665166" target="_blank" rel="noopener" className={`${styles.whatsappNote} ${styles.whatsappCta}`} aria-label="פתח וואטסאפ לשליחת הודעה ל-054-566-5166">
+          <span aria-hidden>💬</span>
+          <span>
+            או שלח הודעה ישר לוואטסאפ
+            <br />
+            <strong dir="ltr">054-566-5166</strong>
+          </span>
+        </a>
       </div>
       <div className={styles.backToGameWrap}>
         <Link href="/?skipIntro=1" className={`${styles.startButton} ${styles.backToGame}`}>

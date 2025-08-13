@@ -166,7 +166,7 @@ function Home() {
     const t = setTimeout(() => {
       setIsAnswerCorrect(false)
       setFeedbackMode(true)
-    }, 5000)
+    }, 10000)
     return () => clearTimeout(t)
   }, [started, qIdx, bubbleMode, feedbackMode])
 
@@ -466,6 +466,19 @@ function Home() {
         </div>
         <h2 className={styles.question}>{isAnswerCorrect ? 'תשובה נכונה!' : 'תשובה לא נכונה'}</h2>
         <p className={styles.explanation}>{q.explanation}</p>
+
+        {(() => {
+          const raw = q.optionImgs?.[0] ?? q.image
+          if (!raw) return null
+          const safeSrc = raw.includes('&') ? raw.replace(/&/g, '%26') : raw
+          const isRemote = /^https?:\/\//.test(safeSrc)
+
+          return (
+            <div className={styles.answerMediaCard}>
+              <Image src={safeSrc} alt="" width={960} height={540} className={styles.answerImage} priority unoptimized={isRemote} />
+            </div>
+          )
+        })()}
         {isAnswerCorrect ? (
           <button className={styles.startButton} onClick={nextQuestion}>
             המשך לשאלה הבאה
@@ -497,6 +510,7 @@ function Home() {
   return (
     <div className={styles.container}>
       <div className={styles.redShards} aria-hidden />
+
       <div className={styles.hud}>
         <div className={styles.progress}>
           שאלה {qIdx + 1} / {questions.length}
@@ -516,6 +530,9 @@ function Home() {
             <span className={styles.optText}>{opt}</span>
           </button>
         ))}
+      </div>
+      <div className={styles.cokeRibbon} aria-hidden>
+        <Image src="/images/coke_ribbon1.png" alt="" fill className={styles.cokeRibbonImg} priority />
       </div>
     </div>
   )
