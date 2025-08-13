@@ -58,7 +58,7 @@ function Home() {
   const [showContact, setShowContact] = useState(false) // ← חדש
   const audioRef = useRef<HTMLAudioElement>(null)
   const [muted, setMuted] = useState(false)
-
+  const [correctCount, setCorrectCount] = useState(0)
   const nextIdRef = useRef(0)
   const [bonusToast, setBonusToast] = useState<null | { coins: number; ts: number }>(null)
   const coinsFor = (hits: number) => (hits < 5 ? 0 : 1 + Math.floor((hits - 5) / 2))
@@ -140,6 +140,18 @@ function Home() {
     setCoinFlash(true)
     setTimeout(() => setCoinFlash(false), 600)
   }
+
+  const submitStats = useCallback(async (correct: number, totalScore: number): Promise<void> => {
+    await fetch('/api/plays', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ correctAnswers: correct, score: totalScore })
+    })
+  }, [])
+
+  useEffect(() => {
+    if (finished) void submitStats(correctCount, score)
+  }, [finished]) // ערכים “קפואים” ברגע שסיימנו
 
   // כמה מטבעות חדשים נוספו בין prev→next
   const calcNewCoins = (prev: number, next: number) => {
@@ -316,10 +328,11 @@ function Home() {
     popBubble(b, el, ((t.clientX - r.left) / r.width) * 100, ((t.clientY - r.top) / r.height) * 100)
   }
 
-  const handleAnswer = (correct: boolean) => {
-    setIsAnswerCorrect(correct)
+  const handleAnswer = (isCorrect: boolean) => {
+    setIsAnswerCorrect(isCorrect)
     setFeedbackMode(true)
-    if (correct) {
+    if (isCorrect) {
+      setCorrectCount((c) => c + 1)
       setScore((s) => s + 2)
       wowCoin()
     }
@@ -345,7 +358,7 @@ function Home() {
   const playAgain = React.useCallback(() => {
     // לא לחזור לאינטרו
     setShowIntro(false)
-
+    setCorrectCount(0)
     // חזרה למסך ההתחלתי (Hero)
     setStarted(false)
     setFinished(false)
@@ -445,6 +458,7 @@ function Home() {
               className={styles.startButton}
               onClick={() => {
                 audio?.start()
+                setCorrectCount(0)
                 setStarted(true)
                 setTimerKey((k) => k + 1)
               }}

@@ -1,0 +1,221 @@
+.admin {
+  --bg: #0b0f1a;
+  --panel: #111827;
+  --ink: #e5e7eb;
+  --muted: #9ca3af;
+  --border: #1f2937;
+  --head: #0d1320;
+
+  min-height: 100dvh;
+  background: radial-gradient(80% 60% at 50% 0%, #111827 0%, #0b0f1a 60%) fixed;
+  color: var(--ink);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, 'Noto Sans', 'Helvetica Neue', sans-serif;
+  padding: 24px;
+  direction: rtl;
+}
+
+.header h1 {
+  font-size: 22px;
+  margin: 0 0 8px;
+  color: #fff;
+}
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 18px;
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+.cardLabel {
+  color: var(--muted);
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.cardValue {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.tableWrap h2 {
+  font-size: 16px;
+  margin: 6px 0 10px;
+  color: #fff;
+}
+
+.tableScroll {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--panel);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--ink);
+}
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--head);
+  color: #e5e7eb;
+  text-align: right;
+  font-weight: 700;
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.table tbody td {
+  padding: 12px 10px;
+  border-top: 1px solid var(--border);
+}
+.table tbody tr:nth-child(odd) {
+  background: #0f1626;
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 28px !important;
+}
+
+/* מובייל — טבלה הופכת ל”כרטיסים“, אין גלילה לצד */
+@media (max-width: 720px) {
+  .admin {
+    padding: 16px;
+  }
+  .kpis {
+    grid-template-columns: 1fr;
+  }
+  .cardValue {
+    font-size: 24px;
+  }
+
+  .table {
+    display: block;
+  }
+  .table thead {
+    display: none;
+  }
+  .table tbody {
+    display: grid;
+    gap: 10px;
+    padding: 10px;
+  }
+  .table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 14px;
+    background: #0f1626;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+  }
+  .table tbody td {
+    border: 0;
+    padding: 4px 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px;
+  }
+  .table tbody td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 12px;
+  }
+}
+
+.sectionTitle {
+  font-size: 16px;
+  margin: 10px 0;
+  color: #fff;
+}
+
+.cards {
+  display: grid;
+  gap: 12px;
+}
+
+.rowCard {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent), #101826;
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.rowHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.rowId {
+  font-weight: 800;
+  font-size: 14px;
+  background: #0b1220;
+  border: 1px solid #243043;
+  padding: 4px 8px;
+  border-radius: 10px;
+  color: #e5e7eb;
+}
+
+.rowDate {
+  color: #cbd5e1;
+  font-size: 13px;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.rowStats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.statPill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0f1626;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.statLabel {
+  color: #9ca3af;
+  font-size: 12px;
+}
+.statValue {
+  color: #e5e7eb;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.empty {
+  text-align: center;
+  color: #9ca3af;
+  background: #0f1626;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+/* דסקטופ – גריד שתי עמודות של כרטיסים */
+@media (min-width: 720px) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
