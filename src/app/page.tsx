@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import Image from 'next/image'
 import styles from './page.module.scss'
 import { questions } from './questions'
@@ -8,6 +8,7 @@ import ContactForm from './ContactForm' // ← חדש
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
+import { useAudio } from './AudioProvider'
 
 type Bubble = {
   id: number
@@ -55,6 +56,8 @@ function Home() {
   const [feedbackMode, setFeedbackMode] = useState(false)
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null)
   const [showContact, setShowContact] = useState(false) // ← חדש
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [muted, setMuted] = useState(false)
 
   const nextIdRef = useRef(0)
   const [bonusToast, setBonusToast] = useState<null | { coins: number; ts: number }>(null)
@@ -66,6 +69,34 @@ function Home() {
   }
   const bonusTimerRef = useRef<number | null>(null)
   const roundCoinsRef = useRef(0)
+
+  useEffect(() => {
+    const a = audioRef.current
+    if (!a) return
+    a.loop = true
+    a.volume = 0.4
+
+    const tryUnmutePlay = () => a.play().catch(() => {})
+
+    // מנסים לנגן עם קול
+    a.muted = false
+    a.play().catch(() => {
+      // אם נחסם — מתחילים בשקט, ונבטל השתקה בלחיצה/מקש ראשון
+      a.muted = true
+      a.play().finally(() => {
+        const unmute = () => {
+          a.muted = false
+          setMuted(false)
+          tryUnmutePlay()
+          window.removeEventListener('pointerdown', unmute)
+          window.removeEventListener('keydown', unmute)
+        }
+        window.addEventListener('pointerdown', unmute, { once: true })
+        window.addEventListener('keydown', unmute, { once: true })
+      })
+    })
+  }, [])
+
   useEffect(() => {
     roundCoinsRef.current = roundCoins
   }, [roundCoins])
@@ -294,6 +325,23 @@ function Home() {
     }
   }
 
+  const q = questions[qIdx]
+
+  const shuffledOptions = useMemo(() => {
+    const arr = q.options.map((label, i) => ({
+      label,
+      isCorrect: i === q.correct, // מי הנכונה לפי האינדקס המקורי
+      badgeIndex: i // לשמור איזה אייקון לשים
+    }))
+    // Fisher–Yates
+    for (let j = arr.length - 1; j > 0; j--) {
+      const k = Math.floor(Math.random() * (j + 1))
+      ;[arr[j], arr[k]] = [arr[k], arr[j]]
+    }
+    return arr
+    // מערבב מחדש בכל שאלה חדשה (או בכל reset לפי הצורך)
+  }, [qIdx])
+
   const playAgain = React.useCallback(() => {
     // לא לחזור לאינטרו
     setShowIntro(false)
@@ -321,6 +369,8 @@ function Home() {
     if (bonusTimerRef.current) clearTimeout(bonusTimerRef.current!)
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
   }, [])
+
+  const audio = useAudio()
 
   if (showIntro)
     return (
@@ -357,11 +407,24 @@ function Home() {
           <div className={styles.heroContent}>
             <Image src="/images/coke-logo.png" alt="Coca-Cola" width={196} height={96} className={styles.logoHero} priority />
             <h1 className={styles.title}>CokePop SpeedShot</h1>
-            <p className={styles.tagline}>קוויז בזק של 5 שניות — תפוסו מטבעות, שברו שיאים, שתפו חברים.</p>
+
+            <p className={styles.tagline}>
+              קוויז בזק של 5 שניות — תפוסו מטבעות, שברו שיאים, שתפו חברים.
+              <span className={styles.coinsHint}>
+                ✅ תשובה נכונה: ‎+2🪙
+                <br />
+                🫧 סבב בועות: 5 אדומות ראשונות = ‎+1🪙
+                <br />
+                ➕ כל שתי אדומות מעבר לכך = ‎+1🪙
+                <br />
+                🧮 הזיכוי מתווסף בסוף הסבב
+              </span>
+            </p>
+
             <div className={styles.chips} dir="rtl">
               <span className={styles.chip}>
                 <span className={styles.num} dir="ltr">
-                  5
+                  10
                 </span>
                 <span className={styles.txt}>שניות לשאלה</span>
                 <span aria-hidden="true">⚡</span>
@@ -374,13 +437,14 @@ function Home() {
                 <span aria-hidden="true">🎯</span>
               </span>
               <span className={styles.chip}>
-                <span className={styles.txt}>בונוס בועות</span>
+                <span className={styles.txt}>מלא בונוס בועות</span>
                 <span aria-hidden="true">🫧</span>
               </span>
             </div>
             <button
               className={styles.startButton}
               onClick={() => {
+                audio?.start()
                 setStarted(true)
                 setTimerKey((k) => k + 1)
               }}
@@ -513,7 +577,6 @@ function Home() {
       </div>
     )
 
-  const q = questions[qIdx]
   if (feedbackMode)
     return (
       <div className={styles.container}>
@@ -582,12 +645,12 @@ function Home() {
       </div>
       <h2 className={styles.question}>{q.text}</h2>
       <div className={styles.options}>
-        {q.options.map((opt, i) => (
-          <button key={i} className={styles.optionButton} onClick={() => handleAnswer(i === q.correct)}>
+        {shuffledOptions.map((opt, idx) => (
+          <button key={idx} className={styles.optionButton} onClick={() => handleAnswer(opt.isCorrect)}>
             <span className={styles.badge}>
-              <Image src={i === 0 ? '/images/can-classic.png' : i === 1 ? '/images/can-zero.png' : '/images/can-sprite.png'} alt="" width={40} height={40} />
+              <Image src={opt.badgeIndex === 0 ? '/images/can-classic.png' : opt.badgeIndex === 1 ? '/images/can-zero.png' : '/images/can-sprite.png'} alt="" width={40} height={40} />
             </span>
-            <span className={styles.optText}>{opt}</span>
+            <span className={styles.optText}>{opt.label}</span>
           </button>
         ))}
       </div>
