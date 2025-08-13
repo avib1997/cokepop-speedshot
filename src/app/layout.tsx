@@ -3,6 +3,7 @@ import './globals.scss'
 import Image from 'next/image'
 import AudioProvider from './AudioProvider'
 import MuteButton from './MuteButton'
+import { Analytics } from '@vercel/analytics/next'
 
 export const metadata: Metadata = {
   title: 'CokePop SpeedShot',
