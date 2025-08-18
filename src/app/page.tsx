@@ -679,7 +679,7 @@ function Home() {
         {shuffledOptions.map((opt, idx) => (
           <button key={idx} className={styles.optionButton} onClick={() => handleAnswer(opt.isCorrect)}>
             <span className={styles.badge}>
-              <Image src={opt.img} alt="" width={60} height={60} />
+              <Image src={opt.img} alt="" width={80} height={80} />
             </span>
             <span className={styles.optText}>{opt.label}</span>
           </button>

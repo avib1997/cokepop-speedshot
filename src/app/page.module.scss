@@ -191,7 +191,7 @@
 }
 .optImg {
   width: 100%;
-  max-width: 260px;
+  max-width: 560px;
   aspect-ratio: 16/9;
   object-fit: cover;
   border-radius: 12px;
@@ -202,10 +202,10 @@
 }
 
 .badge {
-  width: 66px;
-  height: 66px;
+  width: 86px;
+  height: 86px;
   margin: 0px;
-  padding: 0px;
+  padding: 10px;
   border-radius: 10px;
   overflow: hidden;
   background: #111;
@@ -223,6 +223,7 @@
 .optText {
   flex: 1;
   text-align: right;
+  font-size: 1.05rem;
 }
 
 .explanation {
