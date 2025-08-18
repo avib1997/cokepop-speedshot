@@ -48,7 +48,7 @@ function Home() {
   const [bubbles, setBubbles] = useState<Bubble[]>([])
 
   // בונוס: רק אדומות נספרות; בונוס פעם אחת בסבב אחרי 5
-  const [redHits, setRedHits] = useState(0)
+  const [, setRedHits] = useState(0)
   const [roundCoins, setRoundCoins] = useState(0)
   const [usedBubbleChance, setUsedBubbleChance] = useState(false)
   const [finished, setFinished] = useState(false)
@@ -57,7 +57,7 @@ function Home() {
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null)
   const [showContact, setShowContact] = useState(false) // ← חדש
   const audioRef = useRef<HTMLAudioElement>(null)
-  const [muted, setMuted] = useState(false)
+  const [, setMuted] = useState(false)
   const [correctCount, setCorrectCount] = useState(0)
   const nextIdRef = useRef(0)
   const [bonusToast, setBonusToast] = useState<null | { coins: number; ts: number }>(null)
@@ -151,16 +151,9 @@ function Home() {
 
   useEffect(() => {
     if (finished) void submitStats(correctCount, score)
-  }, [finished]) // ערכים “קפואים” ברגע שסיימנו
+  }, [correctCount, finished, score, submitStats]) // ערכים “קפואים” ברגע שסיימנו
 
   // כמה מטבעות חדשים נוספו בין prev→next
-  const calcNewCoins = (prev: number, next: number) => {
-    const base = prev < 5 && next >= 5 ? 1 : 0 // מעבר סף 5
-    const prevExtra = Math.max(0, prev - 5)
-    const nextExtra = Math.max(0, next - 5)
-    const everyTwo = Math.floor(nextExtra / 2) - Math.floor(prevExtra / 2) // כל 2 אחרי 5
-    return base + everyTwo
-  }
 
   const onGoodHit = () => {
     setRedHits((prev) => {
@@ -277,31 +270,6 @@ function Home() {
     return () => clearTimeout(t)
   }, [started, qIdx, bubbleMode, feedbackMode])
 
-  const handleBubbleClick = (b: Bubble, e: React.MouseEvent<HTMLButtonElement>) => {
-    if (b.popping) return
-
-    const el = e.currentTarget as HTMLButtonElement
-    const rect = el.getBoundingClientRect()
-    const cx = ((e.clientX - rect.left) / rect.width) * 100
-    const cy = ((e.clientY - rect.top) / rect.height) * 100
-    const kind: 'good' | 'bad' = b.isLogo ? 'good' : 'bad'
-
-    // מקפיאים את מצב האנימציה והמיקום כדי שלא "יקפוץ"
-    const cs = window.getComputedStyle(el)
-    el.style.animationPlayState = 'paused'
-    el.style.transition = 'none'
-
-    // מפעילים אנימציית פופ על המעטפת הפנימית ומסמנים סוג
-    setBubbles((prev) => prev.map((x) => (x.id === b.id ? { ...x, popping: kind, cx, cy } : x)))
-
-    // מסירים אחרי ~0.4s (אורך הפופ)
-    setTimeout(() => {
-      setBubbles((prev) => prev.filter((x) => x.id !== b.id))
-    }, 400)
-
-    if (kind === 'good') onGoodHit()
-  }
-
   const popBubble = (b: Bubble, el: HTMLButtonElement, cx: number, cy: number) => {
     if (b.popping) return
     // לעצור את האנימציה בלי bottom (זה שובש במובייל)
@@ -340,20 +308,20 @@ function Home() {
 
   const q = questions[qIdx]
 
-  const shuffledOptions = useMemo(() => {
-    const arr = q.options.map((label, i) => ({
-      label,
-      isCorrect: i === q.correct, // מי הנכונה לפי האינדקס המקורי
-      badgeIndex: i // לשמור איזה אייקון לשים
-    }))
-    // Fisher–Yates
-    for (let j = arr.length - 1; j > 0; j--) {
-      const k = Math.floor(Math.random() * (j + 1))
-      ;[arr[j], arr[k]] = [arr[k], arr[j]]
-    }
-    return arr
-    // מערבב מחדש בכל שאלה חדשה (או בכל reset לפי הצורך)
-  }, [qIdx])
+  // const shuffledOptions = useMemo(() => {
+  //   const arr = q.options.map((label, i) => ({
+  //     label,
+  //     isCorrect: i === q.correct, // מי הנכונה לפי האינדקס המקורי
+  //     badgeIndex: i // לשמור איזה אייקון לשים
+  //   }))
+  //   // Fisher–Yates
+  //   for (let j = arr.length - 1; j > 0; j--) {
+  //     const k = Math.floor(Math.random() * (j + 1))
+  //     ;[arr[j], arr[k]] = [arr[k], arr[j]]
+  //   }
+  //   return arr
+  //   // מערבב מחדש בכל שאלה חדשה (או בכל reset לפי הצורך)
+  // }, [qIdx])
 
   const playAgain = React.useCallback(() => {
     // לא לחזור לאינטרו
@@ -384,6 +352,55 @@ function Home() {
   }, [])
 
   const audio = useAudio()
+
+  type OptVM = { label: string; isCorrect: boolean; img: string }
+
+  // במקום ה-badgeIndex ושורת ה-useMemo הישנה
+  const shuffledOptions = useMemo<OptVM[]>(() => {
+    // מערבב את הפקקים ובוחר 3 שונים
+    const CAP_IMGS = [
+      '/images/caps/p.png',
+      '/images/caps/p1.png',
+      '/images/caps/p2.png',
+      '/images/caps/p3.png',
+      '/images/caps/p4.png',
+      '/images/caps/p5.png',
+      '/images/caps/p6.png',
+      '/images/caps/p7.png',
+      '/images/caps/p8.png',
+      '/images/caps/p9.png',
+      '/images/caps/p10.png',
+      '/images/caps/p11.png',
+      '/images/caps/p12.png',
+      '/images/caps/p13.png',
+      '/images/caps/p14.png',
+      '/images/caps/p15.png',
+      '/images/caps/p16.png',
+      '/images/caps/p17.png',
+      '/images/caps/p18.png',
+      '/images/caps/p19.png',
+      '/images/caps/p20.png',
+      '/images/caps/p21.png'
+    ]
+    const caps = [...CAP_IMGS]
+    for (let i = caps.length - 1; i > 0; i--) {
+      const k = Math.floor(Math.random() * (i + 1))
+      ;[caps[i], caps[k]] = [caps[k], caps[i]]
+    }
+    const imgs = caps.slice(0, 3)
+
+    // בונה אפשרויות + תמונה, ואז מערבב את סדרן
+    const arr: OptVM[] = q.options.map((label, i) => ({
+      label,
+      isCorrect: i === q.correct,
+      img: imgs[i]
+    }))
+    for (let j = arr.length - 1; j > 0; j--) {
+      const k = Math.floor(Math.random() * (j + 1))
+      ;[arr[j], arr[k]] = [arr[k], arr[j]]
+    }
+    return arr
+  }, [q.options, q.correct])
 
   if (showIntro)
     return (
@@ -422,7 +439,7 @@ function Home() {
             <h1 className={styles.title}>CokePop SpeedShot</h1>
 
             <p className={styles.tagline}>
-              קוויז בזק של 5 שניות — תפוסו מטבעות, שברו שיאים, שתפו חברים.
+              קוויז בזק של 10 שניות — תפוסו מטבעות, שברו שיאים, שתפו חברים.
               <span className={styles.coinsHint}>
                 ✅ תשובה נכונה: ‎+2🪙
                 <br />
@@ -662,7 +679,7 @@ function Home() {
         {shuffledOptions.map((opt, idx) => (
           <button key={idx} className={styles.optionButton} onClick={() => handleAnswer(opt.isCorrect)}>
             <span className={styles.badge}>
-              <Image src={opt.badgeIndex === 0 ? '/images/can-classic.png' : opt.badgeIndex === 1 ? '/images/can-zero.png' : '/images/can-sprite.png'} alt="" width={40} height={40} />
+              <Image src={opt.img} alt="" width={60} height={60} />
             </span>
             <span className={styles.optText}>{opt.label}</span>
           </button>
